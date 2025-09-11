@@ -20,8 +20,9 @@ from singer_sdk.typing import (
 from tap_linkedin_ads.streams.base_stream import LinkedInAdsStreamBase
 
 if t.TYPE_CHECKING:
+    import requests
     from singer_sdk.helpers.types import Context
-from singer_sdk.streams.core import REPLICATION_INCREMENTAL
+from singer_sdk.streams.core import REPLICATION_FULL_TABLE, REPLICATION_INCREMENTAL
 
 SCHEMAS_DIR = resources.files(__package__) / "schemas"
 UTC = timezone.utc
@@ -69,7 +70,8 @@ class LinkedInAdsStream(LinkedInAdsStreamBase):
         end_date = datetime.fromisoformat(self.config["end_date"]).replace(
             tzinfo=timezone.utc
         )
-        if date >= start_date and date <= end_date:
+        # If full refresh, start_date is None -> include all rows
+        if start_date is None or (date >= start_date and date <= end_date):
             return super().post_process(row, context)
         return None
 
@@ -79,6 +81,10 @@ class AccountsStream(LinkedInAdsStream):
 
     name = "accounts"
     primary_keys: t.ClassVar[list[str]] = ["id"]
+    replication_key = None
+    # Note: manually filtering in post_process since the API doesnt have filter options
+    replication_method = REPLICATION_FULL_TABLE
+
 
     schema = PropertiesList(
         Property(
@@ -131,6 +137,22 @@ class AccountsStream(LinkedInAdsStream):
             ObjectType(Property("versionTag", StringType), additional_properties=False),
         ),
     ).to_dict()
+
+    def parse_response(self, response: requests.Response) -> t.Iterator[dict]:
+        """Parse the API response and yield each element.
+
+        Parameters
+        ----------
+        response : requests.Response
+            The HTTP response object from the API.
+
+        Yields:
+        ------
+        dict
+            Each element from the response data.
+        """
+        data = response.json()
+        yield from data.get("elements", [])
 
     def get_child_context(self, record: dict, context: dict | None) -> dict:  # noqa: ARG002
         """Return a context dictionary for a child stream."""
@@ -522,22 +544,6 @@ class CampaignsStream(LinkedInAdsStream):
             **super().get_url_params(context, next_page_token),
         }
 
-    def get_unencoded_params(self, context: Context) -> dict:  # noqa: ARG002
-        """Return a dictionary of unencoded params.
-
-        Args:
-            context: The stream context.
-
-        Returns:
-            A dictionary of URL query parameters.
-        """
-        return {
-            "search": (
-                "(status:(values:List(ACTIVE,PAUSED,ARCHIVED,COMPLETED,"
-                "CANCELED,DRAFT,PENDING_DELETION,REMOVED)))"
-            )
-        }
-
     def get_child_context(self, record: dict, context: dict | None) -> dict:  # noqa: ARG002
         """Return a context dictionary for a child stream."""
         return {
@@ -642,22 +648,6 @@ class CampaignGroupsStream(LinkedInAdsStream):
             **super().get_url_params(context, next_page_token),
         }
 
-    def get_unencoded_params(self, context: Context) -> dict:  # noqa: ARG002
-        """Return a dictionary of unencoded params.
-
-        Args:
-            context: The stream context.
-
-        Returns:
-            A dictionary of URL query parameters.
-        """
-        return {
-            "search": (
-                "(status:(values:List(ACTIVE,ARCHIVED,CANCELED,DRAFT,PAUSED,"
-                "PENDING_DELETION,REMOVED)))"
-            )
-        }
-
     def post_process(self, row: dict, context: dict | None = None) -> dict | None:
         """Post-process each record returned by the API."""
         row["run_schedule_start"] = datetime.fromtimestamp(  # noqa: DTZ006
@@ -756,7 +746,7 @@ class VideoAdsStream(LinkedInAdsStream):
     """https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads/advertising-targeting/create-and-manage-video#finders."""
 
     name = "video_ads"
-    path = "/adDirectSponsoredContents"
+    path = "/posts"
     parent_stream_type = AccountsStream
 
     schema = PropertiesList(
@@ -793,7 +783,7 @@ class VideoAdsStream(LinkedInAdsStream):
     @property
     def url_base(self) -> str:
         """Return the API URL root, configurable via tap settings."""
-        return "https://api.linkedin.com/v2"
+        return "https://api.linkedin.com/rest"
 
     def get_url_params(
         self,

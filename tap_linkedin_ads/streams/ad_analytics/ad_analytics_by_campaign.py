@@ -32,7 +32,7 @@ class _AdAnalyticsByCampaignInit(AdAnalyticsBase):
     parent_stream_type = CampaignsStream
 
     schema = PropertiesList(
-        Property("campaign_id", StringType),
+        Property("campaign_id", IntegerType),
         Property("documentCompletions", IntegerType),
         Property("documentFirstQuartileCompletions", IntegerType),
         Property("clicks", IntegerType),
@@ -168,6 +168,21 @@ class _AdAnalyticsByCampaignInit(AdAnalyticsBase):
             "q": "analytics",
             **super().get_url_params(context, next_page_token),
         }
+    @property
+    def http_headers(self) -> dict:
+        """Return the http headers needed.
+
+        Returns:
+            A dictionary of HTTP headers.
+        """
+        headers = {}
+        if "user_agent" in self.config:
+            headers["User-Agent"] = self.config["user_agent"]
+        headers["LinkedIn-Version"] = "202501" #convert to config
+        headers["Content-Type"] = "application/json"
+        headers["X-Restli-Protocol-Version"] = "2.0.0"
+
+        return headers
 
     def get_unencoded_params(self, context: Context) -> dict:
         """Return a dictionary of unencoded params.

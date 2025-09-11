@@ -192,6 +192,21 @@ class _AdAnalyticsByCreativeInit(AdAnalyticsBase):
             ),
             "fields": self.adanalyticscolumns[0],
         }
+    @property
+    def http_headers(self) -> dict:
+        """Return the http headers needed.
+
+        Returns:
+            A dictionary of HTTP headers.
+        """
+        headers = {}
+        if "user_agent" in self.config:
+            headers["User-Agent"] = self.config["user_agent"]
+        headers["LinkedIn-Version"] = "202501" #convert to config
+        headers["Content-Type"] = "application/json"
+        headers["X-Restli-Protocol-Version"] = "2.0.0"
+
+        return headers
 
     def post_process(self, row: dict, context: dict | None = None) -> dict | None:
         viral_registrations = row.pop("viralRegistrations", None)
