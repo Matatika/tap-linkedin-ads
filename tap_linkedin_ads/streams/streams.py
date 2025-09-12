@@ -803,8 +803,36 @@ class VideoAdsStream(LinkedInAdsStream):
             msg = "Context is required for this stream"
             raise ValueError(msg)
         return {
-            "q": "account",
-            "account": f"urn:li:sponsoredAccount:{context['account_id']}",
-            "owner": context["owner_urn"],
+            "q": "dscAdAccount",
+            "dscAdAccount": f"urn:li:sponsoredAccount:{context['account_id']}",
+            "count":100,
             **super().get_url_params(context, next_page_token),
         }
+
+    def get_unencoded_params(self, context: dict | None) -> dict:  # noqa: ARG002
+        """Return a dictionary of unencoded parameters for the API request.
+
+        Args:
+            context: The stream context.
+
+        Returns:
+            A dictionary of unencoded parameters.
+        """
+        return {
+            "dscAdTypes": "List(VIDEO)",   # leave raw, not encoded
+        }
+    @property
+    def http_headers(self) -> dict:
+        """Return the http headers needed.
+
+        Returns:
+            A dictionary of HTTP headers.
+        """
+        headers = {}
+        if "user_agent" in self.config:
+            headers["User-Agent"] = self.config["user_agent"]
+        headers["LinkedIn-Version"] = "202501" #convert to config
+        headers["Content-Type"] = "application/json"
+        headers["X-Restli-Protocol-Version"] = "2.0.0"
+
+        return headers
