@@ -560,10 +560,6 @@ class CampaignGroupsStream(LinkedInAdsStream):
 
     schema = PropertiesList(
         Property(
-            "runSchedule",
-            ObjectType(Property("start", IntegerType), Property("end", IntegerType)),
-        ),
-        Property(
             "changeAuditStamps",
             ObjectType(
                 Property(
