@@ -412,14 +412,6 @@ class CampaignsStream(LinkedInAdsStream):
         Property("associatedEntity", StringType),
         Property("associated_entity_organization_id", IntegerType),
         Property("associated_entity_person_id", IntegerType),
-        Property(
-            "runSchedule",
-            ObjectType(
-                Property("start", IntegerType),
-                Property("end", IntegerType),
-                additional_properties=False,
-            ),
-        ),
         Property("optimizationTargetType", StringType),
         Property(
             "changeAuditStamps",
