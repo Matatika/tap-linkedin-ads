@@ -650,12 +650,13 @@ class CreativesStream(LinkedInAdsStream):
     name = "creatives"
     parent_stream_type = AccountsStream
     primary_keys: t.ClassVar[list[str]] = ["id"]
+    replication_key = "lastModifiedAt"
 
     schema = PropertiesList(
         Property("account", StringType),
         Property("account_id", IntegerType),
         Property("campaign", StringType),
-        Property("campaign_id", StringType),
+        Property("campaign_id", IntegerType),
         Property(
             "content",
             ObjectType(
@@ -672,6 +673,21 @@ class CreativesStream(LinkedInAdsStream):
                         additional_properties=False,
                     ),
                 ),
+                Property(
+                    "textAd",
+                    ObjectType(
+                        Property("description", StringType),
+                        Property("headline", StringType),
+                        additional_properties=False,
+                    ),
+                ),
+            ),
+        ),
+        Property("reference", StringType),
+        Property(
+            "review",
+            ObjectType(
+                Property("status", StringType),
             ),
         ),
         Property("createdAt", IntegerType),
@@ -728,6 +744,18 @@ class CreativesStream(LinkedInAdsStream):
         return {
             "creative_id": creative_id,
         }
+
+    def post_process(self, row: dict, context: dict | None = None) -> dict:  # noqa: ARG002
+        """Extract campaign_id from URN."""
+        campaign = row.get("campaign")
+        content = row.get("content", {})
+        if campaign and ":" in campaign:
+            row["campaign_id"] = int(campaign.split(":")[-1])
+        else:
+            row["campaign_id"] = None
+        if "reference" in content:
+            row["reference"] = content["reference"]
+        return row
 
 
 class VideoAdsStream(LinkedInAdsStream):
