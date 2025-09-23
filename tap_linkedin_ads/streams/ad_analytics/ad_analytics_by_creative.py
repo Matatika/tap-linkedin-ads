@@ -28,6 +28,7 @@ UTC = timezone.utc
 class _AdAnalyticsByCreativeInit(AdAnalyticsBase):
     name = "AdAnalyticsByCreativeInit"
     parent_stream_type = CreativesStream
+    primary_keys: t.ClassVar[list[str]] = ["creative_id", "day"]
 
     schema = PropertiesList(
         Property("landingPageClicks", IntegerType),
