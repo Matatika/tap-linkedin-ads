@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import typing as t
-from datetime import datetime, timezone
+from datetime import date, timezone
 from importlib import resources
 
 from singer_sdk.streams.core import REPLICATION_FULL_TABLE
@@ -35,10 +35,11 @@ class AdAnalyticsBase(LinkedInAdsStreamBase):
         start_date = row.get("dateRange", {}).get("start", {})
 
         if start_date:
-            row["day"] = datetime.strptime(
-                f'{start_date.get("year")}-{start_date.get("month")}-{start_date.get("day")}',
-                "%Y-%m-%d",
-            ).astimezone(UTC)
+            row["day"] = date(
+                start_date.get("year"),
+                start_date.get("month"),
+                start_date.get("day"),
+        )
 
         return super().post_process(row, context)
 
