@@ -7,6 +7,7 @@ from datetime import timezone
 from importlib import resources
 
 import pendulum
+from singer_sdk.streams.core import REPLICATION_INCREMENTAL
 from singer_sdk.typing import (
     IntegerType,
     ObjectType,
@@ -29,6 +30,8 @@ class _AdAnalyticsByCreativeInit(AdAnalyticsBase):
     name = "AdAnalyticsByCreativeInit"
     parent_stream_type = CreativesStream
     primary_keys: t.ClassVar[list[str]] = ["creative_id", "day"]
+    replication_method = REPLICATION_INCREMENTAL
+    replication_key = "day"
 
     schema = PropertiesList(
         Property("clicks", IntegerType),
@@ -104,7 +107,11 @@ class _AdAnalyticsByCreativeInit(AdAnalyticsBase):
         Returns:
             A dictionary of URL query parameters.
         """
-        start_date = pendulum.parse(self.config["start_date"])
+        start_date_value = self.get_starting_replication_key_value(context)
+        if start_date_value:
+            start_date = pendulum.parse(str(start_date_value))
+        else:
+            start_date = pendulum.parse(self.config["start_date"])
         end_date = pendulum.parse(self.config["end_date"])
         return {
             "pivot": "(value:CREATIVE)",

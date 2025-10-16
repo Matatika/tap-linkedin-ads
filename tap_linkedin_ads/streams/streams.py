@@ -650,6 +650,7 @@ class CreativesStream(LinkedInAdsStream):
     name = "creatives"
     parent_stream_type = AccountsStream
     primary_keys: t.ClassVar[list[str]] = ["id"]
+    replication_method = REPLICATION_FULL_TABLE
 
     schema = PropertiesList(
         Property("account", StringType),
