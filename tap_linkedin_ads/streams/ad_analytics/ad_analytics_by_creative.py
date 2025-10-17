@@ -17,7 +17,7 @@ from singer_sdk.typing import (
 )
 
 from tap_linkedin_ads.streams.ad_analytics.ad_analytics_base import AdAnalyticsBase
-from tap_linkedin_ads.streams.streams import CreativesStream
+from tap_linkedin_ads.streams.streams import AccountsStream
 
 if t.TYPE_CHECKING:
     from singer_sdk.helpers.types import Context
@@ -28,7 +28,7 @@ UTC = timezone.utc
 
 class _AdAnalyticsByCreativeInit(AdAnalyticsBase):
     name = "AdAnalyticsByCreativeInit"
-    parent_stream_type = CreativesStream
+    parent_stream_type = AccountsStream
     primary_keys: t.ClassVar[list[str]] = ["creative_id", "day"]
     replication_method = REPLICATION_INCREMENTAL
     replication_key = "day"
@@ -76,7 +76,7 @@ class _AdAnalyticsByCreativeInit(AdAnalyticsBase):
     def adanalyticscolumns(self) -> list[str]:
         """List of columns for adanalytics endpoint."""
         return [
-            "dateRange,clicks,shares,landingPageClicks,comments,costInLocalCurrency,impressions,likes,oneClickLeadFormOpens,oneClickLeads,otherEngagements,totalEngagements"
+            "dateRange,clicks,shares,landingPageClicks,comments,costInLocalCurrency,impressions,likes,oneClickLeadFormOpens,oneClickLeads,otherEngagements,totalEngagements,pivotValues"
         ]
 
     def get_url_params(
@@ -116,8 +116,8 @@ class _AdAnalyticsByCreativeInit(AdAnalyticsBase):
         return {
             "pivot": "(value:CREATIVE)",
             "timeGranularity": "(value:DAILY)",
-            "creatives": (
-                f"List(urn%3Ali%3AsponsoredCreative%3A{context['creative_id']})"
+            "accounts": (
+                f"List(urn%3Ali%3AsponsoredAccount%3A{context['account_id']})"
             ),
             "dateRange": (
                 f"(start:(year:{start_date.year},month:{start_date.month},day:{start_date.day}),"
@@ -143,8 +143,13 @@ class _AdAnalyticsByCreativeInit(AdAnalyticsBase):
 
     def post_process(self, row: dict, context: dict | None = None) -> dict | None:
         viral_registrations = row.pop("viralRegistrations", None)
+        pivot_value = row.pop("pivotValues", None)
+        if isinstance(pivot_value, list):
+            pivot_value = pivot_value[0] if pivot_value else None
         if viral_registrations:
             row["viralRegistrations"] = int(viral_registrations)
+        if pivot_value:
+            row["creative_id"] = pivot_value.split(":")[-1]
 
         return super().post_process(row, context)
 
