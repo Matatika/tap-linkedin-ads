@@ -7,6 +7,7 @@ from datetime import timezone
 from importlib import resources
 
 import pendulum
+from singer_sdk.streams.core import REPLICATION_INCREMENTAL
 from singer_sdk.typing import (
     IntegerType,
     ObjectType,
@@ -16,7 +17,7 @@ from singer_sdk.typing import (
 )
 
 from tap_linkedin_ads.streams.ad_analytics.ad_analytics_base import AdAnalyticsBase
-from tap_linkedin_ads.streams.streams import CampaignsStream
+from tap_linkedin_ads.streams.streams import AccountsStream
 
 if t.TYPE_CHECKING:
     from singer_sdk.helpers.types import Context
@@ -29,44 +30,16 @@ class _AdAnalyticsByCampaignInit(AdAnalyticsBase):
     """https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting#analytics-finder."""
 
     name = "AdAnalyticsByCampaignInit"
-    parent_stream_type = CampaignsStream
+    parent_stream_type = AccountsStream
+    primary_keys: t.ClassVar[list[str]] = ["campaign_id", "day"]
+    replication_method = REPLICATION_INCREMENTAL
+    replication_key = "day"
 
     schema = PropertiesList(
         Property("campaign_id", IntegerType),
-        Property("documentCompletions", IntegerType),
-        Property("documentFirstQuartileCompletions", IntegerType),
         Property("clicks", IntegerType),
-        Property("documentMidpointCompletions", IntegerType),
-        Property("documentThirdQuartileCompletions", IntegerType),
-        Property("downloadClicks", IntegerType),
-        Property("jobApplications", StringType),
-        Property("jobApplyClicks", StringType),
-        Property("postViewJobApplications", StringType),
-        Property("costInUsd", StringType),
-        Property("postViewRegistrations", StringType),
-        Property("registrations", StringType),
-        Property("talentLeads", IntegerType),
-        Property("viralDocumentCompletions", IntegerType),
-        Property("viralDocumentFirstQuartileCompletions", IntegerType),
-        Property("viralDocumentMidpointCompletions", IntegerType),
-        Property("viralDocumentThirdQuartileCompletions", IntegerType),
-        Property("viralDownloadClicks", IntegerType),
-        Property("viralJobApplications", StringType),
-        Property("viralJobApplyClicks", StringType),
         Property("costInLocalCurrency", StringType),
-        Property("viralRegistrations", StringType),
-        Property("approximateUniqueImpressions", IntegerType),
-        Property("cardClicks", IntegerType),
-        Property("cardImpressions", IntegerType),
-        Property("commentLikes", IntegerType),
-        Property("viralCardClicks", IntegerType),
-        Property("viralCardImpressions", IntegerType),
-        Property("viralCommentLikes", IntegerType),
-        Property("actionClicks", IntegerType),
-        Property("adUnitClicks", IntegerType),
         Property("comments", IntegerType),
-        Property("companyPageClicks", IntegerType),
-        Property("conversionValueInLocalCurrency", StringType),
         Property(
             "dateRange",
             ObjectType(
@@ -91,63 +64,20 @@ class _AdAnalyticsByCampaignInit(AdAnalyticsBase):
             ),
         ),
         Property("day", StringType),
-        Property("externalWebsiteConversions", IntegerType),
-        Property("externalWebsitePostClickConversions", IntegerType),
-        Property("externalWebsitePostViewConversions", IntegerType),
-        Property("follows", IntegerType),
-        Property("fullScreenPlays", IntegerType),
         Property("impressions", IntegerType),
         Property("landingPageClicks", IntegerType),
-        Property("leadGenerationMailContactInfoShares", IntegerType),
-        Property("leadGenerationMailInterestedClicks", IntegerType),
         Property("likes", IntegerType),
         Property("oneClickLeadFormOpens", IntegerType),
         Property("oneClickLeads", IntegerType),
-        Property("opens", IntegerType),
         Property("otherEngagements", IntegerType),
-        Property("sends", IntegerType),
         Property("shares", IntegerType),
-        Property("textUrlClicks", IntegerType),
         Property("totalEngagements", IntegerType),
-        Property("videoCompletions", IntegerType),
-        Property("videoFirstQuartileCompletions", IntegerType),
-        Property("videoMidpointCompletions", IntegerType),
-        Property("videoStarts", IntegerType),
-        Property("videoThirdQuartileCompletions", IntegerType),
-        Property("videoViews", IntegerType),
-        Property("viralClicks", IntegerType),
-        Property("viralComments", IntegerType),
-        Property("viralCompanyPageClicks", IntegerType),
-        Property("viralExternalWebsiteConversions", IntegerType),
-        Property("viralExternalWebsitePostClickConversions", IntegerType),
-        Property("viralExternalWebsitePostViewConversions", IntegerType),
-        Property("viralFollows", IntegerType),
-        Property("viralFullScreenPlays", IntegerType),
-        Property("viralImpressions", IntegerType),
-        Property("viralLandingPageClicks", IntegerType),
-        Property("viralLikes", IntegerType),
-        Property("viralOneClickLeadFormOpens", IntegerType),
-        Property("viralOneclickLeads", IntegerType),
-        Property("viralOtherEngagements", IntegerType),
-        Property("viralReactions", IntegerType),
-        Property("reactions", IntegerType),
-        Property("viralShares", IntegerType),
-        Property("viralTotalEngagements", IntegerType),
-        Property("viralVideoCompletions", IntegerType),
-        Property("viralVideoFirstQuartileCompletions", IntegerType),
-        Property("viralVideoMidpointCompletions", IntegerType),
-        Property("viralVideoStarts", IntegerType),
-        Property("viralVideoThirdQuartileCompletions", IntegerType),
-        Property("viralVideoViews", IntegerType),
     ).to_dict()
 
     @property
     def adanalyticscolumns(self) -> list[str]:
         return [
-            "viralLandingPageClicks,viralExternalWebsitePostClickConversions,externalWebsiteConversions,viralVideoFirstQuartileCompletions,leadGenerationMailContactInfoShares,clicks,viralClicks,shares,viralFullScreenPlays,videoMidpointCompletions,viralCardClicks,viralExternalWebsitePostViewConversions,viralTotalEngagements,viralCompanyPageClicks,actionClicks,viralShares,videoCompletions,comments,externalWebsitePostViewConversions,dateRange",
-            "costInUsd,landingPageClicks,oneClickLeadFormOpens,talentLeads,sends,viralOneClickLeadFormOpens,conversionValueInLocalCurrency,viralFollows,otherEngagements,viralVideoCompletions,cardImpressions,leadGenerationMailInterestedClicks,opens,totalEngagements,videoViews,viralImpressions,viralVideoViews,commentLikes,viralDocumentThirdQuartileCompletions,viralLikes",
-            "adUnitClicks,videoThirdQuartileCompletions,cardClicks,likes,viralComments,viralVideoMidpointCompletions,viralVideoThirdQuartileCompletions,oneClickLeads,fullScreenPlays,viralCardImpressions,follows,videoStarts,videoFirstQuartileCompletions,textUrlClicks,reactions,viralReactions,externalWebsitePostClickConversions,viralOtherEngagements,costInLocalCurrency",
-            "viralVideoStarts,viralRegistrations,viralJobApplyClicks,viralJobApplications,jobApplications,jobApplyClicks,viralExternalWebsiteConversions,postViewRegistrations,companyPageClicks,documentCompletions,documentFirstQuartileCompletions,documentMidpointCompletions,documentThirdQuartileCompletions,downloadClicks,viralDocumentCompletions,viralDocumentFirstQuartileCompletions,viralDocumentMidpointCompletions,approximateUniqueImpressions,viralDownloadClicks,impressions",
+            "dateRange,clicks,shares,landingPageClicks,comments,costInLocalCurrency,impressions,likes,oneClickLeadFormOpens,oneClickLeads,otherEngagements,totalEngagements,pivotValues",
         ]
 
     def get_url_params(
@@ -198,8 +128,8 @@ class _AdAnalyticsByCampaignInit(AdAnalyticsBase):
         return {
             "pivot": "(value:CAMPAIGN)",
             "timeGranularity": "(value:DAILY)",
-            "campaigns": (
-                f"List(urn%3Ali%3AsponsoredCampaign%3A{context['campaign_id']})"
+            "accounts": (
+                f"List(urn%3Ali%3AsponsoredAccount%3A{context['account_id']})"
             ),
             "dateRange": (
                 f"(start:(year:{start_date.year},month:{start_date.month},day:{start_date.day}),"
@@ -207,65 +137,22 @@ class _AdAnalyticsByCampaignInit(AdAnalyticsBase):
             ),
             "fields": self.adanalyticscolumns[0],
         }
+    def post_process(self, row: dict, context: dict | None = None) -> dict | None:
 
+        pivot_value = row.pop("pivotValues", None)
+        if isinstance(pivot_value, list):
+            pivot_value = pivot_value[0] if pivot_value else None
 
-class _AdAnalyticsByCampaignSecond(_AdAnalyticsByCampaignInit):
-    name = "adanalyticsbycampaign_second"
+        if pivot_value:
+            row["campaign_id"] = int(pivot_value.split(":")[-1])
 
-    def get_unencoded_params(self, context: Context) -> dict:
-        """Return a dictionary of unencoded params.
-
-        Args:
-            context: The stream context.
-
-        Returns:
-            A dictionary of URL query parameters.
-        """
-        return {
-            **super().get_unencoded_params(context),
-            # Overwrite fields with this column subset
-            "fields": self.adanalyticscolumns[0],
-        }
-
-
-class _AdAnalyticsByCampaignThird(_AdAnalyticsByCampaignInit):
-    name = "adanalyticsbycampaign_third"
-
-    def get_unencoded_params(self, context: Context) -> dict:
-        """Return a dictionary of unencoded params.
-
-        Args:
-            context: The stream context.
-
-        Returns:
-            A dictionary of URL query parameters.
-        """
-        return {
-            **super().get_unencoded_params(context),
-            # Overwrite fields with this column subset
-            "fields": self.adanalyticscolumns[3],
-        }
+        return super().post_process(row, context)
 
 
 class AdAnalyticsByCampaignStream(_AdAnalyticsByCampaignInit):
     """https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting#analytics-finder."""
 
     name = "ad_analytics_by_campaign"
-
-    def get_unencoded_params(self, context: Context) -> dict:
-        """Return a dictionary of unencoded params.
-
-        Args:
-            context: The stream context.
-
-        Returns:
-            A dictionary of URL query parameters.
-        """
-        return {
-            **super().get_unencoded_params(context),
-            # Overwrite fields with this column subset
-            "fields": self.adanalyticscolumns[1],
-        }
 
     def get_records(self, context: dict | None) -> t.Iterable[dict[str, t.Any]]:
         """Return a dictionary of records from adAnalytics classes.
@@ -288,20 +175,10 @@ class AdAnalyticsByCampaignStream(_AdAnalyticsByCampaignInit):
             self._tap,
             schema={"properties": {}},
         )
-        adanalyticsecond_stream = _AdAnalyticsByCampaignSecond(
-            self._tap,
-            schema={"properties": {}},
-        )
-        adanalyticsthird_stream = _AdAnalyticsByCampaignThird(
-            self._tap,
-            schema={"properties": {}},
-        )
         return [
-            self.merge_dicts(x, y, z, p)
-            for x, y, z, p in zip(
+            self.merge_dicts(x, y)
+            for x, y in zip(
                 list(adanalyticsinit_stream.get_records(context)),
                 list(super().get_records(context)),
-                list(adanalyticsecond_stream.get_records(context)),
-                list(adanalyticsthird_stream.get_records(context)),
             )
         ]
