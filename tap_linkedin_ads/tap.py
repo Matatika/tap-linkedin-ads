@@ -73,6 +73,12 @@ class TapLinkedInAds(Tap):
             default="tap-linkedin-ads <api_user_email@your_company.com>",
             description="API ID",
         ),
+        th.Property(
+            "linkedin_version",
+            th.StringType,
+            default="202601",
+            description="LinkedIn API version to use (LinkedIn-Version header)",
+        ),
     ).to_dict()
 
     def discover_streams(self) -> list[streams.LinkedInAdsStream]:
